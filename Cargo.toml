@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "cloth-core"
+]
+resolver = "2"
