@@ -1,0 +1,5 @@
+{
+    "rust-analyzer.linkedProjects": [
+        "./cloth-core/Cargo.toml"
+    ]
+}

@@ -1,5 +1,8 @@
 [workspace]
 members = [
-    "cloth-core"
+    "cloth-core",
+    "cloth-service",
 ]
 resolver = "2"
+
+[dependencies]
