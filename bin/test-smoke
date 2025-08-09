@@ -1,0 +1,57 @@
+#!/bin/sh -eu
+
+API_URL="${API_URL:-https://cloth-api.justanotherdot.workers.dev}"
+FRONTEND_URL="${FRONTEND_URL:-https://5061005f.cloth-frontend.pages.dev}"
+
+echo "Running smoke tests..."
+echo "API: $API_URL"
+echo "Frontend: $FRONTEND_URL"
+
+# Test API health
+echo -n "1. API health check... "
+if curl -sf "$API_URL/health" >/dev/null; then
+    echo "✅ PASS"
+else
+    echo "❌ FAIL"
+    exit 1
+fi
+
+# Test API flags endpoint
+echo -n "2. API flags endpoint... "
+if curl -sf "$API_URL/api/flags" | grep -q '"flags"'; then
+    echo "✅ PASS"
+else
+    echo "❌ FAIL"
+    exit 1
+fi
+
+# Test frontend HTML structure
+echo -n "3. Frontend HTML structure... "
+if curl -sf "$FRONTEND_URL" | grep -q '<html lang="en">' && \
+   curl -sf "$FRONTEND_URL" | grep -q 'modulepreload'; then
+    echo "✅ PASS"
+else
+    echo "❌ FAIL"
+    exit 1
+fi
+
+# Test frontend SPA configuration
+echo -n "4. Frontend SPA mode... "
+if curl -sf "$FRONTEND_URL" | grep -q '"isSpaMode":true'; then
+    echo "✅ PASS"
+else
+    echo "❌ FAIL - SPA mode not enabled"
+    exit 1
+fi
+
+# Test API to Frontend connection (CORS)
+echo -n "5. API CORS headers... "
+if curl -sI "$API_URL/api/flags" | grep -qi "access-control-allow-origin"; then
+    echo "✅ PASS"
+else
+    echo "❌ FAIL - CORS not configured"
+    exit 1
+fi
+
+echo ""
+echo "✅ All smoke tests passed!"

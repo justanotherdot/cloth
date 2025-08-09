@@ -1,0 +1,108 @@
+#!/bin/sh -eu
+
+echo "🐛 Testing specific regression bugs..."
+
+# Navigate to git project root
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+cd "$PROJECT_ROOT"
+
+# Test 1: Root element error regression
+echo -n "1. No 'Root element not found' in entry.client... "
+if ! grep -r "getElementById.*root" frontend/app/entry.client.tsx; then
+    echo "✅ PASS"
+else
+    echo "❌ FAIL - Found hardcoded root element reference"
+    exit 1
+fi
+
+# Test 2: Document hydration (not root element)
+echo -n "2. Uses document hydration... "
+if grep -q "hydrateRoot" frontend/app/entry.client.tsx && \
+   grep -q "document" frontend/app/entry.client.tsx; then
+    echo "✅ PASS"
+else
+    echo "❌ FAIL - Not using document hydration"
+    exit 1
+fi
+
+# Test 3: No manual asset hash management
+echo -n "3. No hardcoded asset hashes in public/... "
+HTML_FILES=$(find frontend/public -name "*.html" 2>/dev/null || true)
+if [ -z "$HTML_FILES" ]; then
+    echo "✅ PASS"
+else
+    if ! echo "$HTML_FILES" | xargs grep -l "entry\.client-[A-Za-z0-9]*\.js" 2>/dev/null; then
+        echo "✅ PASS"
+    else
+        echo "❌ FAIL - Found hardcoded asset hashes in public/"
+        exit 1
+    fi
+fi
+
+# Test 4: CSS imported correctly in Vite
+echo -n "4. CSS imported via import, not link... "
+if grep -q 'import.*tailwind\.css' frontend/app/root.tsx && \
+   ! grep -q 'from.*tailwind\.css' frontend/app/root.tsx; then
+    echo "✅ PASS"
+else
+    echo "❌ FAIL - CSS import method incorrect"
+    exit 1
+fi
+
+# Test 5: SPA mode configured in vite.config
+echo -n "5. SPA mode in vite.config... "
+if grep -q "ssr: false" frontend/vite.config.ts; then
+    echo "✅ PASS"
+else
+    echo "❌ FAIL - SPA mode not configured"
+    exit 1
+fi
+
+# Test 6: No server-side loader functions
+echo -n "6. No server-side loaders in index route... "
+if ! grep -q "export.*loader" frontend/app/routes/_index.tsx; then
+    echo "✅ PASS"
+else
+    echo "❌ FAIL - Found server-side loader (causes hydration mismatch)"
+    exit 1
+fi
+
+# Test 7: Client-side data fetching
+echo -n "7. Uses useEffect for data fetching... "
+if grep -q "useEffect" frontend/app/routes/_index.tsx && \
+   grep -q "fetch" frontend/app/routes/_index.tsx; then
+    echo "✅ PASS"
+else
+    echo "❌ FAIL - Not using client-side data fetching"
+    exit 1
+fi
+
+# Test 8: Remix Vite build command
+echo -n "8. Uses remix vite:build command... "
+if grep -q "remix vite:build" frontend/package.json; then
+    echo "✅ PASS"
+else
+    echo "❌ FAIL - Not using Remix Vite build"
+    exit 1
+fi
+
+# Test 9: Correct deployment directory
+echo -n "9. Deploys build/client directory... "
+if grep -q "build/client" bin/deploy; then
+    echo "✅ PASS"
+else
+    echo "❌ FAIL - Not deploying correct build directory"
+    exit 1
+fi
+
+# Test 10: No manual index.html creation
+echo -n "10. No manual index.html in public/... "
+if [ ! -f "frontend/public/index.html" ]; then
+    echo "✅ PASS"
+else
+    echo "❌ FAIL - Manual index.html found (should be auto-generated)"
+    exit 1
+fi
+
+echo ""
+echo "✅ All regression tests passed!"

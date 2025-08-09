@@ -17,6 +17,10 @@ Each ADR follows this structure:
 - [ADR-0001: Hybrid local-first consistency model](0001-hybrid-local-first-consistency.md)
 - [ADR-0002: Rust + WebAssembly for Workers backend](0002-rust-webassembly-backend.md) 
 - [ADR-0003: Multi-language SDK with shared evaluation core](0003-multi-language-sdk-strategy.md)
+<<<<<<< HEAD
+=======
+- [ADR-0004: GitHub Actions for CI/CD pipeline](0004-github-actions-ci.md)
+>>>>>>> 801dfc3 (Document all the things)
 
 ## Creating new ADRs
 
