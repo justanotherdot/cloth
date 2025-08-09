@@ -1,0 +1,9 @@
+.git
+.github
+node_modules
+target
+tests
+docs
+*.md
+.env*
+.wrangler

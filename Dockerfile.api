@@ -1,0 +1,33 @@
+FROM node:20-slim
+
+WORKDIR /app
+
+# Install Rust for WASM compilation
+RUN apt-get update && apt-get install -y \
+    curl \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN rustup target add wasm32-unknown-unknown
+
+# Install wrangler globally
+RUN npm install -g wrangler
+
+# Install worker-build via cargo
+RUN cargo install worker-build
+
+# Copy all Rust workspace files
+COPY cloth-api/ ./cloth-api/
+COPY cloth-core/ ./cloth-core/
+COPY Cargo.* ./
+
+WORKDIR /app/cloth-api
+
+# Build the worker
+RUN worker-build --release
+
+EXPOSE 8787
+
+CMD ["wrangler", "dev", "--port", "8787", "--local", "--ip", "0.0.0.0"]

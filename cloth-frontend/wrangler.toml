@@ -1,0 +1,16 @@
+name = "cloth-frontend"
+main = "src/index.ts"
+compatibility_date = "2024-08-01"
+
+[build]
+command = "npm ci && npm run build && cp -r build/client/* ./public/"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[env.development]
+name = "cloth-frontend-dev"
+
+[env.production]  
+name = "cloth-frontend"

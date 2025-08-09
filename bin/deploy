@@ -1,6 +1,10 @@
 #!/bin/sh -eu
 
-echo "Deploying Cloth to Cloudflare..."
+echo "Deploying Cloth (dual Workers) to Cloudflare..."
+
+# Navigate to git project root
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+cd "$PROJECT_ROOT"
 
 # Check if wrangler is available
 if ! command -v wrangler >/dev/null 2>&1; then
@@ -14,27 +18,23 @@ if ! wrangler whoami >/dev/null 2>&1; then
     exit 1
 fi
 
-echo "1. Building API (WASM)..."
-cd cloth-api && worker-build --release
-cd ..
-
-echo "2. Building frontend (Remix)..."
-cd frontend && npm ci && npm run build
-cd ..
-
-echo "3. Deploying API to Workers..."
+echo "1. Deploying API Worker..."
 cd cloth-api && wrangler deploy --env production
-cd ..
+cd "$PROJECT_ROOT"
 
-echo "4. Deploying frontend to Pages..."
-cd frontend && wrangler pages deploy build/client --project-name cloth-frontend --commit-dirty=true
-cd ..
+echo "2. Deploying Frontend Worker..."
+cd cloth-frontend && wrangler deploy --env production
+cd "$PROJECT_ROOT"
 
-echo "✅ Deployment complete!"
+echo "Deployment complete!"
 echo ""
-echo "API: https://cloth-api.justanotherdot.workers.dev"
-echo "Frontend: https://5061005f.cloth-frontend.pages.dev"
+echo "API Worker: https://cloth-api.justanotherdot.workers.dev"
+echo "Frontend Worker: https://cloth-frontend.justanotherdot.workers.dev"
 echo ""
-echo "💡 Tip: Enable Cloudflare native CD for automatic deployments:"
-echo "   • Pages: Connect repo in CF dashboard"
-echo "   • Workers: Use GitHub integration"
+echo "API Authentication (for control plane):"
+echo "  Username: admin"
+echo "  Password: Set AUTH_PASSWORD in Cloudflare dashboard"
+echo ""
+echo "Public endpoints:"
+echo "  Frontend: https://cloth-frontend.justanotherdot.workers.dev"
+echo "  Flag evaluation: https://cloth-api.justanotherdot.workers.dev/api/flags/{key}/evaluate"

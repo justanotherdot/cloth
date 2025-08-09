@@ -1,67 +1,74 @@
 #!/bin/sh -eu
 
-echo "🏗️  Testing build integrity..."
+echo "Testing dual Worker build integrity..."
 
 # Navigate to git project root
 PROJECT_ROOT="$(git rev-parse --show-toplevel)"
-cd "$PROJECT_ROOT/frontend"
+cd "$PROJECT_ROOT"
 
-# Test 1: Build succeeds
-echo -n "1. Frontend builds without errors... "
+# Test Worker build
+printf "1. Worker build succeeds... "
+if (cd cloth-api && cargo check) >/dev/null 2>&1; then
+    echo "PASS"
+else
+    echo "FAIL"
+    exit 1
+fi
+
+cd "$PROJECT_ROOT/cloth-frontend"
+
+# Test frontend build
+printf "2. Frontend builds without errors... "
 if npm run build >/dev/null 2>&1; then
-    echo "✅ PASS"
+    echo "PASS"
 else
-    echo "❌ FAIL"
+    echo "FAIL"
     exit 1
 fi
 
-# Test 2: index.html generated with SPA mode
-echo -n "2. SPA index.html generated... "
+# Test static assets
+printf "3. SPA index.html generated... "
 if [ -f "build/client/index.html" ]; then
-    echo "✅ PASS"
+    echo "PASS"
 else
-    echo "❌ FAIL - build/client/index.html not found"
+    echo "FAIL - build/client/index.html not found"
     exit 1
 fi
 
-# Test 3: Required assets present
-echo -n "3. Required assets generated... "
+printf "4. Required assets generated... "
 if find build/client/assets -name "*.js" | grep -q "entry.client" && \
    find build/client/assets -name "*.css" | grep -q "root"; then
-    echo "✅ PASS"
+    echo "PASS"
 else
-    echo "❌ FAIL - Missing entry.client.js or root.css"
+    echo "FAIL - Missing entry.client.js or root.css"
     exit 1
 fi
 
-# Test 4: index.html contains proper asset references
-echo -n "4. Asset references in index.html... "
+printf "5. Asset references in index.html... "
 if grep -q "entry.client" build/client/index.html && \
    grep -q "modulepreload" build/client/index.html; then
-    echo "✅ PASS"
+    echo "PASS"
 else
-    echo "❌ FAIL - index.html missing asset references"
+    echo "FAIL - index.html missing asset references"
     exit 1
 fi
 
-# Test 5: SPA mode enabled in generated JS
-echo -n "5. SPA mode configuration... "
+printf "6. SPA mode configuration... "
 if grep -q '"isSpaMode":true' build/client/index.html; then
-    echo "✅ PASS"
+    echo "PASS"
 else
-    echo "❌ FAIL - SPA mode not enabled"
+    echo "FAIL - SPA mode not enabled"
     exit 1
 fi
 
-# Test 6: No hardcoded URLs in build
-echo -n "6. No hardcoded localhost URLs... "
+printf "7. No hardcoded localhost URLs... "
 if ! grep -r "localhost:" build/client/ 2>/dev/null; then
-    echo "✅ PASS"
+    echo "PASS"
 else
-    echo "❌ FAIL - Found hardcoded localhost URLs"
+    echo "FAIL - Found hardcoded localhost URLs"
     exit 1
 fi
 
-cd ..
+cd "$PROJECT_ROOT"
 echo ""
-echo "✅ All build tests passed!"
+echo "All build tests passed!"
