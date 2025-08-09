@@ -1,0 +1,67 @@
+#!/bin/sh -eu
+
+echo "🏗️  Testing build integrity..."
+
+# Navigate to git project root
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+cd "$PROJECT_ROOT/frontend"
+
+# Test 1: Build succeeds
+echo -n "1. Frontend builds without errors... "
+if npm run build >/dev/null 2>&1; then
+    echo "✅ PASS"
+else
+    echo "❌ FAIL"
+    exit 1
+fi
+
+# Test 2: index.html generated with SPA mode
+echo -n "2. SPA index.html generated... "
+if [ -f "build/client/index.html" ]; then
+    echo "✅ PASS"
+else
+    echo "❌ FAIL - build/client/index.html not found"
+    exit 1
+fi
+
+# Test 3: Required assets present
+echo -n "3. Required assets generated... "
+if find build/client/assets -name "*.js" | grep -q "entry.client" && \
+   find build/client/assets -name "*.css" | grep -q "root"; then
+    echo "✅ PASS"
+else
+    echo "❌ FAIL - Missing entry.client.js or root.css"
+    exit 1
+fi
+
+# Test 4: index.html contains proper asset references
+echo -n "4. Asset references in index.html... "
+if grep -q "entry.client" build/client/index.html && \
+   grep -q "modulepreload" build/client/index.html; then
+    echo "✅ PASS"
+else
+    echo "❌ FAIL - index.html missing asset references"
+    exit 1
+fi
+
+# Test 5: SPA mode enabled in generated JS
+echo -n "5. SPA mode configuration... "
+if grep -q '"isSpaMode":true' build/client/index.html; then
+    echo "✅ PASS"
+else
+    echo "❌ FAIL - SPA mode not enabled"
+    exit 1
+fi
+
+# Test 6: No hardcoded URLs in build
+echo -n "6. No hardcoded localhost URLs... "
+if ! grep -r "localhost:" build/client/ 2>/dev/null; then
+    echo "✅ PASS"
+else
+    echo "❌ FAIL - Found hardcoded localhost URLs"
+    exit 1
+fi
+
+cd ..
+echo ""
+echo "✅ All build tests passed!"

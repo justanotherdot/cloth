@@ -1,0 +1,40 @@
+#!/bin/sh -eu
+
+echo "Deploying Cloth to Cloudflare..."
+
+# Check if wrangler is available
+if ! command -v wrangler >/dev/null 2>&1; then
+    echo "Error: wrangler CLI not found. Install with: npm install -g wrangler"
+    exit 1
+fi
+
+# Check authentication
+if ! wrangler whoami >/dev/null 2>&1; then
+    echo "Error: Not authenticated with Cloudflare. Run: wrangler login"
+    exit 1
+fi
+
+echo "1. Building API (WASM)..."
+cd cloth-api && worker-build --release
+cd ..
+
+echo "2. Building frontend (Remix)..."
+cd frontend && npm ci && npm run build
+cd ..
+
+echo "3. Deploying API to Workers..."
+cd cloth-api && wrangler deploy --env production
+cd ..
+
+echo "4. Deploying frontend to Pages..."
+cd frontend && wrangler pages deploy build/client --project-name cloth-frontend --commit-dirty=true
+cd ..
+
+echo "✅ Deployment complete!"
+echo ""
+echo "API: https://cloth-api.justanotherdot.workers.dev"
+echo "Frontend: https://5061005f.cloth-frontend.pages.dev"
+echo ""
+echo "💡 Tip: Enable Cloudflare native CD for automatic deployments:"
+echo "   • Pages: Connect repo in CF dashboard"
+echo "   • Workers: Use GitHub integration"

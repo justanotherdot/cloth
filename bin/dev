@@ -1,0 +1,35 @@
+#!/bin/sh -eu
+
+echo "Starting Cloth development environment..."
+
+# Check if wrangler is available
+if ! command -v wrangler >/dev/null 2>&1; then
+    echo "Error: wrangler CLI not found. Install with: npm install -g wrangler"
+    exit 1
+fi
+
+# Check if we're already in dev mode
+if pgrep -f "wrangler dev" >/dev/null 2>&1; then
+    echo "Wrangler dev server already running"
+    exit 0
+fi
+
+echo "Starting API dev server (Workers)..."
+cd cloth-api && wrangler dev --port 8787 --local &
+API_PID=$!
+
+echo "API dev server started at http://localhost:8787"
+echo "Process ID: $API_PID"
+
+echo ""
+echo "To start frontend dev server:"
+echo "  cd frontend && npm run dev"
+echo ""
+echo "To stop API dev server:"
+echo "  kill $API_PID"
+echo ""
+echo "Press Ctrl+C to stop"
+
+# Wait for interrupt
+trap "echo 'Stopping dev server...'; kill $API_PID; exit 0" INT TERM
+wait $API_PID
