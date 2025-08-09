@@ -1,6 +1,6 @@
 # Cloth
 
-Minimal feature flag service with experimentation capabilities.
+A minimal feature flag service designed for experimentation and gradual rollouts.
 
 ## Architecture
 
@@ -31,23 +31,23 @@ bin/dev
 cd frontend && npm install && npm run dev
 ```
 
-## Status: LIVE and Deployed! 🚀
+## Production deployment
 
-**✅ Production URLs:**
+**Live URLs:**
 - **API**: https://cloth-api.justanotherdot.workers.dev
-- **Frontend**: https://5061005f.cloth-frontend.pages.dev (Remix SPA + Radix UI)
+- **Frontend**: https://5061005f.cloth-frontend.pages.dev
 
-All 5 critical foundations from `docs/foundations.md` are complete and **deployed**:
+**Infrastructure status:**
 
-1. **✅ Workspace restructure** - `cloth-core` + `cloth-api` + testing structure
-2. **✅ WASM build pipeline** - `worker-build` with `wee_alloc` optimization 
-3. **✅ Testing harness** - Unit tests (core) + integration tests (API) + E2E tests (Playwright)
-4. **✅ Local development** - `bin/dev` script with `wrangler dev` + frontend proxy
-5. **✅ CI/CD pipeline** - GitHub Actions testing + Cloudflare native CD
-6. **✅ KV Storage** - Namespaces created and bound
-7. **✅ Smoke tests** - All passing on live deployment
+- Workspace restructure complete
+- WASM build pipeline operational
+- Comprehensive testing harness in place
+- Local development environment configured
+- CI/CD pipeline functional
+- KV storage namespaces provisioned
+- Smoke tests passing
 
-**Ready for feature development!** 🚀
+The service is ready for feature development.
 
 ## Documentation
 
