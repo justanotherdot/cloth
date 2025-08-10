@@ -10,15 +10,27 @@ binding = "FLAGS"
 preview_id = "a08ec0798553499188c009d1fac459a8"
 id = "ed67b444ef2a402bad2242198a99199d"
 
+[vars]
+AUTH_USERNAME = "admin"
+AUTH_PASSWORD = "changeme"
+
 [env.development]
 name = "cloth-api-dev"
+
+[env.development.vars]
+AUTH_USERNAME = "admin"
+AUTH_PASSWORD = "dev123"
 
 [[env.development.kv_namespaces]]
 binding = "FLAGS"
 preview_id = "a08ec0798553499188c009d1fac459a8"
 
 [env.production]
-name = "cloth-api-prod"
+name = "cloth-api"
+
+[env.production.vars]
+AUTH_USERNAME = "admin"
+AUTH_PASSWORD = "changeme-in-dashboard"
 
 [[env.production.kv_namespaces]]
 binding = "FLAGS"
