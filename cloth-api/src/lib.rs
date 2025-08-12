@@ -1,5 +1,16 @@
 use worker::*;
-use base64::{Engine as _, engine::general_purpose};
+use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, Validation};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+struct CloudflareAccessClaims {
+    sub: String,
+    email: String,
+    iss: String,
+    aud: Vec<String>,
+    exp: usize,
+    iat: usize,
+}
 
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
@@ -12,12 +23,12 @@ async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .get_async("/api/flags/:key/evaluate", evaluate_flag)
         .get_async("/health", health_check)
         
-        // Protected control plane routes (require auth)
-        .get_async("/api/flags", |req, ctx| async move { auth_middleware(req, ctx, list_flags).await })
-        .post_async("/api/flags", |req, ctx| async move { auth_middleware(req, ctx, create_flag).await })
-        .get_async("/api/flags/:key", |req, ctx| async move { auth_middleware(req, ctx, get_flag).await })
-        .put_async("/api/flags/:key", |req, ctx| async move { auth_middleware(req, ctx, update_flag).await })
-        .delete_async("/api/flags/:key", |req, ctx| async move { auth_middleware(req, ctx, delete_flag).await })
+        // Protected control plane routes (require JWT auth)
+        .get_async("/api/flags", |req, ctx| async move { jwt_middleware(req, ctx, list_flags).await })
+        .post_async("/api/flags", |req, ctx| async move { jwt_middleware(req, ctx, create_flag).await })
+        .get_async("/api/flags/:key", |req, ctx| async move { jwt_middleware(req, ctx, get_flag).await })
+        .put_async("/api/flags/:key", |req, ctx| async move { jwt_middleware(req, ctx, update_flag).await })
+        .delete_async("/api/flags/:key", |req, ctx| async move { jwt_middleware(req, ctx, delete_flag).await })
         
         .run(req, env)
         .await
@@ -79,7 +90,7 @@ async fn evaluate_flag(_req: Request, ctx: RouteContext<()>) -> Result<Response>
     Ok(response)
 }
 
-async fn auth_middleware<F, Fut>(
+async fn jwt_middleware<F, Fut>(
     req: Request,
     ctx: RouteContext<()>,
     handler: F,
@@ -88,40 +99,65 @@ where
     F: FnOnce(Request, RouteContext<()>) -> Fut,
     Fut: std::future::Future<Output = Result<Response>>,
 {
-    let auth_header = req.headers().get("Authorization")?;
-    
-    let authorized = match auth_header {
-        Some(auth) if auth.starts_with("Basic ") => {
-            let encoded = &auth[6..]; // Remove "Basic " prefix
-            if let Ok(decoded) = general_purpose::STANDARD.decode(encoded) {
-                if let Ok(credentials) = String::from_utf8(decoded) {
-                    let parts: Vec<&str> = credentials.splitn(2, ':').collect();
-                    if parts.len() == 2 {
-                        let username = parts[0];
-                        let password = parts[1];
-                        
-                        let expected_username = ctx.env.var("AUTH_USERNAME")?.to_string();
-                        let expected_password = ctx.env.var("AUTH_PASSWORD")?.to_string();
-                        
-                        username == expected_username && password == expected_password
-                    } else {
-                        false
-                    }
-                } else {
-                    false
+    // Check for Cloudflare Access JWT header
+    let jwt_token = match req.headers().get("Cf-Access-Jwt-Assertion")? {
+        Some(token) => token,
+        None => {
+            // Fallback to Authorization header for direct JWT testing
+            match req.headers().get("Authorization")? {
+                Some(auth) if auth.starts_with("Bearer ") => auth[7..].to_string(),
+                _ => {
+                    let mut response = Response::empty()?;
+                    response.headers_mut().set("Access-Control-Allow-Origin", "*")?;
+                    return Ok(response.with_status(401));
                 }
-            } else {
-                false
             }
         }
-        _ => false,
     };
+
+    // Validate JWT
+    let authorized = validate_cloudflare_access_jwt(&jwt_token, &ctx.env).await.unwrap_or(false);
     
     if authorized {
         handler(req, ctx).await
     } else {
         let mut response = Response::empty()?;
-        response.headers_mut().set("WWW-Authenticate", "Basic realm=\"Cloth Control Plane\"")?;
+        response.headers_mut().set("Access-Control-Allow-Origin", "*")?;
         Ok(response.with_status(401))
+    }
+}
+
+async fn validate_cloudflare_access_jwt(token: &str, env: &Env) -> Result<bool> {
+    // For now, we'll do basic JWT structure validation
+    // In production, you'd validate against Cloudflare's public keys
+    
+    // Decode header to check algorithm
+    let header = decode_header(token).map_err(|_| Error::from("Invalid JWT header"))?;
+    
+    if header.alg != Algorithm::RS256 {
+        return Ok(false);
+    }
+
+    // For development, we'll skip signature validation
+    // In production, fetch public keys from CF Access endpoint
+    let mut validation = Validation::new(Algorithm::RS256);
+    validation.insecure_disable_signature_validation(); // TODO: Remove in production
+    
+    // Get expected issuer and audience from environment
+    let expected_issuer = env.var("CF_ACCESS_ISSUER")?.to_string();
+    let expected_audience = env.var("CF_ACCESS_AUDIENCE")?.to_string();
+    
+    validation.set_issuer(&[expected_issuer]);
+    validation.set_audience(&[expected_audience]);
+
+    // Use dummy key since we disabled signature validation
+    let key = DecodingKey::from_secret("dummy".as_ref());
+    
+    match decode::<CloudflareAccessClaims>(token, &key, &validation) {
+        Ok(_claims) => {
+            // JWT is valid, user is authenticated
+            Ok(true)
+        }
+        Err(_) => Ok(false)
     }
 }

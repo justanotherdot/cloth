@@ -17,27 +17,19 @@ export default function Index() {
       ? 'http://localhost:8787'
       : 'https://cloth-api.justanotherdot.workers.dev';
     
-    // Get stored credentials
-    const username = localStorage.getItem('cloth_username') || 'admin';
-    const password = localStorage.getItem('cloth_password') || '';
-    
-    if (!password) {
-      setError('Authentication required');
-      setLoading(false);
-      return;
-    }
-    
-    const credentials = btoa(`${username}:${password}`);
-    
+    // Authentication handled by proxy layer
     fetch(`${apiUrl}/api/flags`, {
+      credentials: 'include', // Include authentication cookies
       headers: {
-        'Authorization': `Basic ${credentials}`,
         'Content-Type': 'application/json'
       }
     })
       .then(res => {
         if (res.status === 401) {
-          throw new Error('Authentication failed');
+          throw new Error('Authentication required');
+        }
+        if (!res.ok) {
+          throw new Error('Failed to load flags');
         }
         return res.json();
       })
@@ -60,50 +52,6 @@ export default function Index() {
     );
   }
 
-  if (error === 'Authentication required' || error === 'Authentication failed') {
-    return (
-      <div className="max-w-md mx-auto mt-16 p-6 bg-white rounded-lg shadow-lg">
-        <h2 className="text-2xl font-bold mb-4 text-center">Cloth Control Plane</h2>
-        <p className="text-gray-600 mb-6 text-center">Enter credentials to access flag management</p>
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          const formData = new FormData(e.target as HTMLFormElement);
-          const password = formData.get('password') as string;
-          localStorage.setItem('cloth_password', password);
-          window.location.reload();
-        }}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">Username</label>
-            <input 
-              type="text" 
-              value="admin" 
-              disabled
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-            />
-          </div>
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-2">Password</label>
-            <input 
-              type="password" 
-              name="password"
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter password"
-            />
-          </div>
-          <button 
-            type="submit"
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            Login
-          </button>
-          {error === 'Authentication failed' && (
-            <p className="mt-4 text-red-600 text-sm text-center">Invalid credentials. Please try again.</p>
-          )}
-        </form>
-      </div>
-    );
-  }
 
   if (error) {
     return (
