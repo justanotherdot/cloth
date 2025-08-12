@@ -97,7 +97,7 @@ fi
 
 # Test 10: Authentication configured
 printf "10. Authentication configured... "
-if grep -q "AUTH_USERNAME" cloth-api/wrangler.toml; then
+if grep -q "CF_ACCESS_ISSUER" cloth-api/wrangler.toml; then
     echo "PASS"
 else
     echo "FAIL - Authentication not configured"

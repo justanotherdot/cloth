@@ -11,15 +11,17 @@ preview_id = "a08ec0798553499188c009d1fac459a8"
 id = "ed67b444ef2a402bad2242198a99199d"
 
 [vars]
-AUTH_USERNAME = "admin"
-AUTH_PASSWORD = "changeme"
+# Cloudflare Access configuration
+# Set these after configuring CF Access
+CF_ACCESS_ISSUER = "https://justanotherdot.cloudflareaccess.com"
+CF_ACCESS_AUDIENCE = "1b4de8f5d703de7ad337aec11c2ad283e879da6bb6b0e91fae1b7079d216fc35"
 
 [env.development]
 name = "cloth-api-dev"
 
 [env.development.vars]
-AUTH_USERNAME = "admin"
-AUTH_PASSWORD = "dev123"
+CF_ACCESS_ISSUER = "https://justanotherdot.cloudflareaccess.com"
+CF_ACCESS_AUDIENCE = "1b4de8f5d703de7ad337aec11c2ad283e879da6bb6b0e91fae1b7079d216fc35"
 
 [[env.development.kv_namespaces]]
 binding = "FLAGS"
@@ -29,8 +31,8 @@ preview_id = "a08ec0798553499188c009d1fac459a8"
 name = "cloth-api"
 
 [env.production.vars]
-AUTH_USERNAME = "admin"
-AUTH_PASSWORD = "changeme-in-dashboard"
+CF_ACCESS_ISSUER = "https://justanotherdot.cloudflareaccess.com"
+CF_ACCESS_AUDIENCE = "1b4de8f5d703de7ad337aec11c2ad283e879da6bb6b0e91fae1b7079d216fc35"
 
 [[env.production.kv_namespaces]]
 binding = "FLAGS"
