@@ -1,48 +1,11 @@
-# Rust
-/target/
-debug/
-**/*.rs.bk
-*.pdb
-Cargo.lock
-
-# Node.js / Frontend
+# Dependencies
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-# Keep root package-lock.json, ignore workspace ones
-/cloth-frontend/package-lock.json
-/tests/e2e/package-lock.json
-yarn.lock
-pnpm-lock.yaml
+.pnp
+.pnp.js
 
-# Frontend build outputs  
-/cloth-frontend/dist/
-/cloth-frontend/build/
-/cloth-frontend/public/
-.vite/
-.next/
-.remix/
-
-# Generated static assets
-**/dist/
-**/build/client/
-**/build/server/
-**/public/build/
-
-# Wrangler / Cloudflare
-/cloth-api/build/
-/cloth-frontend/public/
-.wrangler/
-wrangler.toml.bak
-
-# Testing
-/tests/e2e/test-results/
-/tests/e2e/playwright-report/
-/tests/e2e/playwright/.cache/
-coverage/
-.nyc_output/
+# Production builds
+dist/
+build/
 
 # Environment variables
 .env
@@ -50,21 +13,14 @@ coverage/
 .env.development.local
 .env.test.local
 .env.production.local
-.dev.vars
-
-# IDE / Editor
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
 
 # Logs
-logs
-*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
 
-# Runtime
+# Runtime data
 pids
 *.pid
 *.seed
@@ -73,6 +29,9 @@ pids
 # Coverage directory used by tools like istanbul
 coverage/
 *.lcov
+
+# nyc test coverage
+.nyc_output
 
 # Dependency directories
 jspm_packages/
@@ -98,40 +57,46 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variables file
-.env.test
-
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
 
-# next.js build output
+# Next.js build output
 .next
 
-# nuxt.js build output
+# Nuxt.js build / generate output
 .nuxt
 
-# vuepress build output
-.vuepress/dist
+# Gatsby files
+.cache/
+public
 
-# Serverless directories
-.serverless/
-
-# FuseBox cache
-.fusebox/
-
-# DynamoDB Local files
-.dynamodb/
-
-# TernJS port file
-.tern-port
+# Storybook build outputs
+.out
+.storybook-out
 
 # Temporary folders
 tmp/
 temp/
 
-# Test artifacts and reports
-test-results/
-test-output/
-**/test-artifacts/
-**/.playwright-cache/
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Wrangler
+.wrangler/
+
+# TypeScript
+*.tsbuildinfo

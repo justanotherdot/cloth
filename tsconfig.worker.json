@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2020", "WebWorker"],
+    "types": ["@cloudflare/workers-types"],
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "outDir": "dist"
+  },
+  "include": ["src/worker.ts", "src/storage.ts", "src/data.ts"],
+  "exclude": ["src/app"]
+}

@@ -1,0 +1,3 @@
+#!/bin/sh -eu
+
+npx prettier --check .
