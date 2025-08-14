@@ -1,0 +1,15 @@
+name = "cloth"
+main = "dist/worker.js"
+compatibility_date = "2025-08-14"
+assets = { directory = "dist/assets" }
+
+[[durable_objects.bindings]]
+name = "STORAGE"
+class_name = "StorageObject"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["StorageObject"]
+
+[build]
+command = "npm run build"

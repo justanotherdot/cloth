@@ -1,0 +1,4 @@
+#!/bin/sh -eu
+
+npx tsc --noEmit -p tsconfig.app.json
+npx tsc --noEmit -p tsconfig.worker.json

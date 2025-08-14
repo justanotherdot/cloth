@@ -1,9 +1,0 @@
-[workspace]
-members = [
-    "cloth-core",
-    "cloth-api",
-]
-resolver = "2"
-
-[workspace.metadata.bin]
-wasm-build = "cd cloth-api && cargo install -q worker-build && worker-build --release"
