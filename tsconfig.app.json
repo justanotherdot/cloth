@@ -5,5 +5,13 @@
     "types": ["vitest/globals", "@testing-library/jest-dom"]
   },
   "include": ["src/app", "src/**/*.test.tsx"],
-  "exclude": ["src/worker.ts", "src/storage.ts", "src/auth.ts", "src/data.ts", "src/test/setup.ts", "src/test/storage.test.ts", "src/test/worker.test.ts"]
+  "exclude": [
+    "src/worker.ts",
+    "src/storage.ts",
+    "src/auth.ts",
+    "src/data.ts",
+    "src/test/setup.ts",
+    "src/test/storage.test.ts",
+    "src/test/worker.test.ts"
+  ]
 }

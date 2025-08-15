@@ -29,7 +29,8 @@ describe('Worker API', () => {
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
-      expect(data.data.status).toBe('healthy');
+      expect(data.data.service).toBe('cloth');
+      expect(data.data.version).toBe('0.0.0');
       expect(data.data.timestamp).toBeTruthy();
     });
   });
