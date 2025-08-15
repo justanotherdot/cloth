@@ -11,11 +11,10 @@ describe('HomePage', () => {
     // Default mock for successful flag loading
     (globalThis.fetch as any).mockResolvedValue({
       ok: true,
-      text: async () =>
-        JSON.stringify({
-          success: true,
-          data: [],
-        }),
+      json: async () => ({
+        success: true,
+        data: [],
+      }),
     });
   });
 
@@ -48,11 +47,10 @@ describe('HomePage', () => {
 
     (globalThis.fetch as any).mockResolvedValue({
       ok: true,
-      text: async () =>
-        JSON.stringify({
-          success: true,
-          data: mockFlags,
-        }),
+      json: async () => ({
+        success: true,
+        data: mockFlags,
+      }),
     });
 
     render(<HomePage />);
@@ -80,7 +78,7 @@ describe('HomePage', () => {
       ok: false,
       status: 500,
       statusText: 'Internal Server Error',
-      text: async () => '',
+      json: async () => ({}),
     });
 
     render(<HomePage />);

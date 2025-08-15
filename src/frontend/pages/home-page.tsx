@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Flag, ApiResponse } from '../data';
+import { useState } from 'react';
+// Types are imported by the hook
+import { useFlags } from '../hooks/use-flags';
 import * as Switch from '@radix-ui/react-switch';
 import * as Label from '@radix-ui/react-label';
 import * as Dialog from '@radix-ui/react-dialog';
@@ -7,9 +8,7 @@ import * as Toast from '@radix-ui/react-toast';
 import { Plus, X, Settings, Trash2 } from 'lucide-react';
 
 function HomePage() {
-  const [flags, setFlags] = useState<Flag[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { flags, loading, error, createFlag, updateFlag, deleteFlag } = useFlags();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -21,127 +20,39 @@ function HomePage() {
     enabled: false,
   });
 
-  useEffect(() => {
-    loadFlags();
-  }, []);
-
-  const loadFlags = async () => {
-    try {
-      const response = await fetch('/api/flag');
-
-      if (!response.ok) {
-        setError(`API error: ${response.status} ${response.statusText}`);
-        return;
-      }
-
-      const text = await response.text();
-      if (!text.trim()) {
-        setError('Empty response from API');
-        return;
-      }
-
-      const result: ApiResponse<Flag[]> = JSON.parse(text);
-
-      if (result.success) {
-        setFlags(result.data);
-      } else {
-        setError(result.error);
-      }
-    } catch (err) {
-      console.error('Load flags error:', err);
-      setError(
-        `Failed to load flags: ${err instanceof Error ? err.message : 'Unknown error'}`
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createFlag = async (e: React.FormEvent) => {
+  const handleCreateFlag = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFlag.key.trim() || !newFlag.name.trim()) return;
 
-    try {
-      const response = await fetch('/api/flag', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newFlag),
-      });
-
-      const result: ApiResponse<Flag> = await response.json();
-
-      if (result.success) {
-        setFlags((prev) => [result.data, ...prev]);
-        setNewFlag({ key: '', name: '', description: '', enabled: false });
-        setDialogOpen(false);
-        showToast('Flag created successfully');
-      } else {
-        setError(result.error);
-      }
-    } catch (_err) {
-      setError('Failed to create flag');
+    const result = await createFlag(newFlag);
+    if (result) {
+      setNewFlag({ key: '', name: '', description: '', enabled: false });
+      setDialogOpen(false);
+      showToast('Flag created successfully');
+    } else {
+      showToast('Failed to create flag');
     }
   };
 
-  const toggleFlag = async (flagId: string, enabled: boolean) => {
-    try {
-      const response = await fetch(`/api/flag/${flagId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled }),
-      });
-
-      if (!response.ok) {
-        setError(`API error: ${response.status} ${response.statusText}`);
-        return;
-      }
-
-      const text = await response.text();
-      if (!text.trim()) {
-        setError('Empty response from API');
-        return;
-      }
-
-      const result: ApiResponse<Flag> = JSON.parse(text);
-
-      if (result.success) {
-        setFlags((prev) =>
-          prev.map((f) => (f.id === flagId ? result.data : f))
-        );
-        showToast(`Flag ${enabled ? 'enabled' : 'disabled'}`);
-      } else {
-        setError(result.error);
-      }
-    } catch (err) {
-      console.error('Toggle flag error:', err);
-      setError(
-        `Failed to update flag: ${err instanceof Error ? err.message : 'Unknown error'}`
-      );
+  const handleToggleFlag = async (flagId: string, enabled: boolean) => {
+    const result = await updateFlag(flagId, { enabled });
+    if (result) {
+      showToast(`Flag ${enabled ? 'enabled' : 'disabled'}`);
+    } else {
+      showToast('Failed to update flag');
     }
   };
 
-  const deleteFlag = async (flagId: string, flagName: string) => {
+  const handleDeleteFlag = async (flagId: string, flagName: string) => {
     if (!confirm(`Are you sure you want to delete "${flagName}"?`)) {
       return;
     }
 
-    try {
-      const response = await fetch(`/api/flag/${flagId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        setError(`API error: ${response.status} ${response.statusText}`);
-        return;
-      }
-
-      setFlags((prev) => prev.filter((f) => f.id !== flagId));
+    const result = await deleteFlag(flagId);
+    if (result) {
       showToast('Flag deleted successfully');
-    } catch (err) {
-      console.error('Delete flag error:', err);
-      setError(
-        `Failed to delete flag: ${err instanceof Error ? err.message : 'Unknown error'}`
-      );
+    } else {
+      showToast('Failed to delete flag');
     }
   };
 
@@ -193,7 +104,7 @@ function HomePage() {
                   </Dialog.Close>
                 </div>
 
-                <form onSubmit={createFlag} className="space-y-4">
+                <form onSubmit={handleCreateFlag} className="space-y-4">
                   <div>
                     <Label.Root className="block text-sm font-medium text-gray-700 mb-2">
                       Key *
@@ -287,12 +198,6 @@ function HomePage() {
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
             <div className="text-red-700">{error}</div>
-            <button
-              onClick={() => setError(null)}
-              className="mt-2 text-sm text-red-600 hover:text-red-800"
-            >
-              Dismiss
-            </button>
           </div>
         )}
 
@@ -341,14 +246,14 @@ function HomePage() {
                     <Switch.Root
                       checked={flag.enabled}
                       onCheckedChange={(enabled) =>
-                        toggleFlag(flag.id, enabled)
+                        handleToggleFlag(flag.id, enabled)
                       }
                       className="w-11 h-6 bg-gray-200 rounded-full data-[state=checked]:bg-green-600 relative focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                     >
                       <Switch.Thumb className="block w-5 h-5 bg-white rounded-full transition-transform duration-100 transform data-[state=checked]:translate-x-5" />
                     </Switch.Root>
                     <button
-                      onClick={() => deleteFlag(flag.id, flag.name)}
+                      onClick={() => handleDeleteFlag(flag.id, flag.name)}
                       className="p-2 text-gray-400 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-md"
                       title="Delete flag"
                     >

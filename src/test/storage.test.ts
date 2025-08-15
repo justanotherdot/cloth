@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { StorageObject } from '../storage';
+import { StorageObject } from '../storage/durable-object';
 
 // Mock DurableObjectStorage
 const mockStorageMap = new Map();
@@ -33,53 +33,48 @@ describe('StorageObject', () => {
   });
 
   describe('Flag operations', () => {
-    it('should create a new flag', async () => {
-      const request = new Request('https://test.com/flag', {
-        method: 'POST',
-        body: JSON.stringify({
-          key: 'test_flag',
-          name: 'Test Flag',
-          description: 'A test flag',
-        }),
+    it('should store a flag via PUT endpoint', async () => {
+      const testFlag = {
+        id: 'test-id',
+        key: 'test_flag',
+        name: 'Test Flag',
+        description: 'A test flag',
+        enabled: false,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      };
+
+      const request = new Request('http://internal/put/test-id', {
+        method: 'PUT',
+        body: JSON.stringify(testFlag),
       });
 
       const response = await storage.fetch(request);
-      const data = await response.json();
 
-      expect(response.status).toBe(201);
-      expect(data.key).toBe('test_flag');
-      expect(data.name).toBe('Test Flag');
-      expect(data.enabled).toBe(false);
-      expect(data.id).toBeTruthy();
-      expect(mockDurableObjectStorage.put).toHaveBeenCalled();
+      expect(response.status).toBe(200);
+      expect(mockDurableObjectStorage.put).toHaveBeenCalledWith('flag:test-id', testFlag);
     });
 
-    it('should prevent duplicate flag keys', async () => {
-      // First, create a flag
-      await storage.fetch(
-        new Request('https://test.com/flag', {
-          method: 'POST',
-          body: JSON.stringify({
-            key: 'duplicate_key',
-            name: 'First Flag',
-          }),
-        })
-      );
+    it('should get a flag via GET endpoint', async () => {
+      const testFlag = {
+        id: 'test-id',
+        key: 'test_flag',
+        name: 'Test Flag',
+        description: 'A test flag',
+        enabled: false,
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      };
 
-      // Try to create another with same key
-      const request = new Request('https://test.com/flag', {
-        method: 'POST',
-        body: JSON.stringify({
-          key: 'duplicate_key',
-          name: 'Second Flag',
-        }),
-      });
+      mockStorageMap.set('flag:test-id', testFlag);
 
+      const request = new Request('http://internal/get/test-id');
       const response = await storage.fetch(request);
       const data = await response.json();
 
-      expect(response.status).toBe(500);
-      expect(data.error).toContain('already exists');
+      expect(response.status).toBe(200);
+      expect(data.id).toBe('test-id');
+      expect(data.key).toBe('test_flag');
     });
 
     it('should list all flags', async () => {
@@ -104,7 +99,7 @@ describe('StorageObject', () => {
       mockStorageMap.set('flag:1', flag1);
       mockStorageMap.set('flag:2', flag2);
 
-      const request = new Request('https://test.com/flag');
+      const request = new Request('http://internal/list');
 
       const response = await storage.fetch(request);
       const data = await response.json();
@@ -114,60 +109,27 @@ describe('StorageObject', () => {
       expect(data).toHaveLength(2);
     });
 
-    it('should update a flag', async () => {
-      // Create a flag first
-      const flag = {
-        id: 'test-id',
-        key: 'test',
-        name: 'Test',
-        enabled: false,
-        createdAt: '2024-01-01T00:00:00.000Z',
-        updatedAt: '2024-01-01T00:00:00.000Z',
-      };
-      mockStorageMap.set('flag:test-id', flag);
-
-      const request = new Request('https://test.com/flag/test-id', {
-        method: 'PUT',
-        body: JSON.stringify({ enabled: true }),
-      });
-
-      const response = await storage.fetch(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.enabled).toBe(true);
-      expect(data.updatedAt).not.toBe(flag.updatedAt);
-    });
-
-    it('should delete a flag', async () => {
-      // Create a flag first
-      const flag = {
-        id: 'test-id',
-        key: 'test',
-        name: 'Test',
-        enabled: false,
-        createdAt: '2024-01-01T00:00:00.000Z',
-        updatedAt: '2024-01-01T00:00:00.000Z',
-      };
-      mockStorageMap.set('flag:test-id', flag);
-
-      const request = new Request('https://test.com/flag/test-id', {
+    it('should delete a flag via DELETE endpoint', async () => {
+      const request = new Request('http://internal/delete/test-id', {
         method: 'DELETE',
       });
 
       const response = await storage.fetch(request);
 
-      expect(response.status).toBe(204);
-      expect(mockDurableObjectStorage.delete).toHaveBeenCalledWith(
-        'flag:test-id'
-      );
+      expect(response.status).toBe(200);
+      expect(mockDurableObjectStorage.delete).toHaveBeenCalledWith('flag:test-id');
     });
 
-    it('should return 404 for non-existent flag operations', async () => {
-      const request = new Request('https://test.com/flag/non-existent', {
-        method: 'PUT',
-        body: JSON.stringify({ enabled: true }),
-      });
+    it('should return 404 for non-existent flag', async () => {
+      const request = new Request('http://internal/get/non-existent');
+
+      const response = await storage.fetch(request);
+
+      expect(response.status).toBe(404);
+    });
+
+    it('should return 404 for unknown endpoints', async () => {
+      const request = new Request('http://internal/unknown');
 
       const response = await storage.fetch(request);
 

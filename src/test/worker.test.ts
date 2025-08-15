@@ -49,11 +49,7 @@ describe('Worker API', () => {
       const response = await worker.default.fetch(request, mockEnv as any);
       const data = await response.json();
 
-      expect(mockStorage.fetch).toHaveBeenCalledWith(
-        expect.objectContaining({
-          method: 'GET',
-        })
-      );
+      expect(mockStorage.fetch).toHaveBeenCalledWith(expect.stringContaining('/list'));
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
     });
