@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import HomePage from './HomePage';
+import HomePage from './home-page';
 
 // Mock fetch globally
 globalThis.fetch = vi.fn();
