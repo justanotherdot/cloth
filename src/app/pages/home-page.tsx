@@ -42,10 +42,10 @@ function HomePage() {
 
       const result: ApiResponse<Flag[]> = JSON.parse(text);
 
-      if (result.success && result.data) {
+      if (result.success) {
         setFlags(result.data);
       } else {
-        setError(result.error || 'Failed to load flags');
+        setError(result.error);
       }
     } catch (err) {
       console.error('Load flags error:', err);
@@ -70,13 +70,13 @@ function HomePage() {
 
       const result: ApiResponse<Flag> = await response.json();
 
-      if (result.success && result.data) {
-        setFlags((prev) => [result.data!, ...prev]);
+      if (result.success) {
+        setFlags((prev) => [result.data, ...prev]);
         setNewFlag({ key: '', name: '', description: '', enabled: false });
         setDialogOpen(false);
         showToast('Flag created successfully');
       } else {
-        setError(result.error || 'Failed to create flag');
+        setError(result.error);
       }
     } catch (_err) {
       setError('Failed to create flag');
@@ -104,13 +104,13 @@ function HomePage() {
 
       const result: ApiResponse<Flag> = JSON.parse(text);
 
-      if (result.success && result.data) {
+      if (result.success) {
         setFlags((prev) =>
-          prev.map((f) => (f.id === flagId ? result.data! : f))
+          prev.map((f) => (f.id === flagId ? result.data : f))
         );
         showToast(`Flag ${enabled ? 'enabled' : 'disabled'}`);
       } else {
-        setError(result.error || 'Failed to update flag');
+        setError(result.error);
       }
     } catch (err) {
       console.error('Toggle flag error:', err);

@@ -1,8 +1,6 @@
-export interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
+export type ApiResponse<T> = 
+  | { success: true; data: T }
+  | { success: false; error: string };
 
 export interface Flag {
   id: string;
