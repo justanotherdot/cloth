@@ -104,7 +104,7 @@ describe('HomePage', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Failed to fetch flags: 500 Internal Server Error/)
+        screen.getByText(/Request failed: 500 Internal Server Error/)
       ).toBeInTheDocument();
     });
   });

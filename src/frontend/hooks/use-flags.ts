@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { flagClient } from '../client/flag-client';
+import { flags } from '../client/flags';
 import { FlagCreateRequest, FlagUpdateRequest } from '../../service/api';
-import { Flag } from '../../core/flag';
 
 /**
  * TanStack Query Hooks
@@ -41,14 +40,7 @@ export const flagKeys = {
 export function useFlags() {
   return useQuery({
     queryKey: flagKeys.list(),
-    queryFn: async () => {
-      const response = await flagClient.list();
-      if (response.success) {
-        return response.data;
-      } else {
-        throw new Error(response.error.message);
-      }
-    },
+    queryFn: () => flags.list(),
   });
 }
 
@@ -59,14 +51,7 @@ export function useCreateFlag() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: FlagCreateRequest): Promise<Flag> => {
-      const response = await flagClient.create(data);
-      if (response.success) {
-        return response.data;
-      } else {
-        throw new Error(response.error.message);
-      }
-    },
+    mutationFn: (data: FlagCreateRequest) => flags.create(data),
     onSuccess: () => {
       // Invalidate and refetch flags list
       queryClient.invalidateQueries({ queryKey: flagKeys.lists() });
@@ -81,14 +66,8 @@ export function useUpdateFlag() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Omit<FlagUpdateRequest, 'id'> }): Promise<Flag> => {
-      const response = await flagClient.update(id, updates);
-      if (response.success) {
-        return response.data;
-      } else {
-        throw new Error(response.error.message);
-      }
-    },
+    mutationFn: ({ id, updates }: { id: string; updates: Omit<FlagUpdateRequest, 'id'> }) => 
+      flags.update(id, updates),
     onSuccess: () => {
       // Invalidate and refetch flags list
       queryClient.invalidateQueries({ queryKey: flagKeys.lists() });
@@ -103,12 +82,7 @@ export function useDeleteFlag() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string): Promise<void> => {
-      const response = await flagClient.delete(id);
-      if (!response.success) {
-        throw new Error(response.error.message);
-      }
-    },
+    mutationFn: (id: string) => flags.delete(id),
     onSuccess: () => {
       // Invalidate and refetch flags list
       queryClient.invalidateQueries({ queryKey: flagKeys.lists() });
