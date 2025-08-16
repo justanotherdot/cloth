@@ -1,9 +1,28 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import HomePage from './home-page';
 
 // Mock fetch globally
 globalThis.fetch = vi.fn();
+
+// Test wrapper with QueryClient
+function TestWrapper({ children }: { children: React.ReactNode }) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false, // Disable retries for tests
+        gcTime: 0, // Disable caching for tests
+      },
+    },
+  });
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      {children}
+    </QueryClientProvider>
+  );
+}
 
 describe('HomePage', () => {
   beforeEach(() => {
@@ -19,7 +38,7 @@ describe('HomePage', () => {
   });
 
   it('should render the page title', async () => {
-    render(<HomePage />);
+    render(<HomePage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByText('Feature flags')).toBeInTheDocument();
@@ -27,7 +46,7 @@ describe('HomePage', () => {
   });
 
   it('should show loading state initially', () => {
-    render(<HomePage />);
+    render(<HomePage />, { wrapper: TestWrapper });
 
     expect(screen.getByText('Loading...')).toBeInTheDocument();
   });
@@ -53,7 +72,7 @@ describe('HomePage', () => {
       }),
     });
 
-    render(<HomePage />);
+    render(<HomePage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByText('Test Flag')).toBeInTheDocument();
@@ -63,7 +82,7 @@ describe('HomePage', () => {
   });
 
   it('should show empty state when no flags exist', async () => {
-    render(<HomePage />);
+    render(<HomePage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByText('No feature flags yet')).toBeInTheDocument();
@@ -81,17 +100,17 @@ describe('HomePage', () => {
       json: async () => ({}),
     });
 
-    render(<HomePage />);
+    render(<HomePage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(
-        screen.getByText(/API error: 500 Internal Server Error/)
+        screen.getByText(/Failed to fetch flags: 500 Internal Server Error/)
       ).toBeInTheDocument();
     });
   });
 
   it('should show new flag button', async () => {
-    render(<HomePage />);
+    render(<HomePage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(

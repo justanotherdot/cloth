@@ -1,6 +1,5 @@
 import { useState } from 'react';
-// Types are imported by the hook
-import { useFlags } from '../hooks/use-flags';
+import { useFlags, useCreateFlag, useUpdateFlag, useDeleteFlag } from '../hooks/use-flags';
 import * as Switch from '@radix-ui/react-switch';
 import * as Label from '@radix-ui/react-label';
 import * as Dialog from '@radix-ui/react-dialog';
@@ -8,7 +7,11 @@ import * as Toast from '@radix-ui/react-toast';
 import { Plus, X, Settings, Trash2 } from 'lucide-react';
 
 function HomePage() {
-  const { flags, loading, error, createFlag, updateFlag, deleteFlag } = useFlags();
+  const { data: flags = [], isLoading, error } = useFlags();
+  const createFlagMutation = useCreateFlag();
+  const updateFlagMutation = useUpdateFlag();
+  const deleteFlagMutation = useDeleteFlag();
+  
   const [dialogOpen, setDialogOpen] = useState(false);
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -24,22 +27,22 @@ function HomePage() {
     e.preventDefault();
     if (!newFlag.key.trim() || !newFlag.name.trim()) return;
 
-    const result = await createFlag(newFlag);
-    if (result) {
+    try {
+      await createFlagMutation.mutateAsync(newFlag);
       setNewFlag({ key: '', name: '', description: '', enabled: false });
       setDialogOpen(false);
       showToast('Flag created successfully');
-    } else {
-      showToast('Failed to create flag');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Failed to create flag');
     }
   };
 
   const handleToggleFlag = async (flagId: string, enabled: boolean) => {
-    const result = await updateFlag(flagId, { enabled });
-    if (result) {
+    try {
+      await updateFlagMutation.mutateAsync({ id: flagId, updates: { enabled } });
       showToast(`Flag ${enabled ? 'enabled' : 'disabled'}`);
-    } else {
-      showToast('Failed to update flag');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Failed to update flag');
     }
   };
 
@@ -48,11 +51,11 @@ function HomePage() {
       return;
     }
 
-    const result = await deleteFlag(flagId);
-    if (result) {
+    try {
+      await deleteFlagMutation.mutateAsync(flagId);
       showToast('Flag deleted successfully');
-    } else {
-      showToast('Failed to delete flag');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Failed to delete flag');
     }
   };
 
@@ -61,7 +64,7 @@ function HomePage() {
     setToastOpen(true);
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex justify-center">
@@ -197,7 +200,7 @@ function HomePage() {
 
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
-            <div className="text-red-700">{error}</div>
+            <div className="text-red-700">{error instanceof Error ? error.message : 'An error occurred'}</div>
           </div>
         )}
 

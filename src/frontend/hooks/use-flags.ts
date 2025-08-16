@@ -1,120 +1,92 @@
-import { useState, useEffect } from 'react';
-import { 
-  FlagListResponse, 
-  FlagCreateRequest, 
-  FlagCreateResponse,
-  FlagUpdateRequest,
-  FlagUpdateResponse,
-  FlagDeleteResponse
-} from '../../service/api';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { flagClient } from '../client/flag-client';
+import { FlagCreateRequest, FlagUpdateRequest } from '../../service/api';
 import { Flag } from '../../core/flag';
 
+// Query keys for cache management
+export const flagKeys = {
+  all: ['flags'] as const,
+  lists: () => [...flagKeys.all, 'list'] as const,
+  list: (filters: Record<string, unknown> = {}) => [...flagKeys.lists(), filters] as const,
+};
+
+/**
+ * Hook to fetch all flags
+ */
 export function useFlags() {
-  const [flags, setFlags] = useState<Flag[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchFlags = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await fetch('/api/flag');
-      
-      if (!response.ok) {
-        setError(`API error: ${response.status} ${response.statusText}`);
-        return;
-      }
-      
-      const data: FlagListResponse = await response.json();
-      
-      if (data.success) {
-        setFlags(data.data);
+  return useQuery({
+    queryKey: flagKeys.list(),
+    queryFn: async () => {
+      const response = await flagClient.list();
+      if (response.success) {
+        return response.data;
       } else {
-        setError(data.error.message);
+        throw new Error(response.error.message);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
+}
 
-  const createFlag = async (request: FlagCreateRequest): Promise<Flag | null> => {
-    try {
-      const response = await fetch('/api/flag', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(request)
-      });
-      
-      const data: FlagCreateResponse = await response.json();
-      
-      if (data.success) {
-        setFlags(prev => [data.data, ...prev]);
-        return data.data;
+/**
+ * Hook to create a new flag
+ */
+export function useCreateFlag() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: FlagCreateRequest): Promise<Flag> => {
+      const response = await flagClient.create(data);
+      if (response.success) {
+        return response.data;
       } else {
-        throw new Error(data.error.message);
+        throw new Error(response.error.message);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-      return null;
-    }
-  };
+    },
+    onSuccess: () => {
+      // Invalidate and refetch flags list
+      queryClient.invalidateQueries({ queryKey: flagKeys.lists() });
+    },
+  });
+}
 
-  const updateFlag = async (id: string, updates: Omit<FlagUpdateRequest, 'id'>): Promise<Flag | null> => {
-    try {
-      const response = await fetch(`/api/flag/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
-      });
-      
-      const data: FlagUpdateResponse = await response.json();
-      
-      if (data.success) {
-        setFlags(prev => prev.map(flag => flag.id === id ? data.data : flag));
-        return data.data;
+/**
+ * Hook to update an existing flag
+ */
+export function useUpdateFlag() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Omit<FlagUpdateRequest, 'id'> }): Promise<Flag> => {
+      const response = await flagClient.update(id, updates);
+      if (response.success) {
+        return response.data;
       } else {
-        throw new Error(data.error.message);
+        throw new Error(response.error.message);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-      return null;
-    }
-  };
+    },
+    onSuccess: () => {
+      // Invalidate and refetch flags list
+      queryClient.invalidateQueries({ queryKey: flagKeys.lists() });
+    },
+  });
+}
 
-  const deleteFlag = async (id: string): Promise<boolean> => {
-    try {
-      const response = await fetch(`/api/flag/${id}`, {
-        method: 'DELETE'
-      });
-      
-      const data: FlagDeleteResponse = await response.json();
-      
-      if (data.success) {
-        setFlags(prev => prev.filter(flag => flag.id !== id));
-        return true;
-      } else {
-        throw new Error(data.error.message);
+/**
+ * Hook to delete a flag
+ */
+export function useDeleteFlag() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string): Promise<void> => {
+      const response = await flagClient.delete(id);
+      if (!response.success) {
+        throw new Error(response.error.message);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-      return false;
-    }
-  };
-
-  useEffect(() => {
-    fetchFlags();
-  }, []);
-
-  return {
-    flags,
-    loading,
-    error,
-    refetch: fetchFlags,
-    createFlag,
-    updateFlag,
-    deleteFlag
-  };
+    },
+    onSuccess: () => {
+      // Invalidate and refetch flags list
+      queryClient.invalidateQueries({ queryKey: flagKeys.lists() });
+    },
+  });
 }
