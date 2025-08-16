@@ -7,6 +7,6 @@
     "allowImportingTsExtensions": false,
     "outDir": "dist"
   },
-  "include": ["src/worker.ts", "src/storage.ts", "src/data.ts"],
-  "exclude": ["src/app"]
+  "include": ["src/worker.ts", "src/storage", "src/core", "src/service", "src/auth.ts"],
+  "exclude": ["src/frontend"]
 }

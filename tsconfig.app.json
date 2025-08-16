@@ -4,12 +4,17 @@
     "noEmit": true,
     "types": ["vitest/globals", "@testing-library/jest-dom"]
   },
-  "include": ["src/app", "src/**/*.test.tsx"],
+  "include": ["src/frontend", "src/core", "src/service/api.ts", "src/**/*.test.tsx"],
   "exclude": [
     "src/worker.ts",
-    "src/storage.ts",
+    "src/storage",
+    "src/service/routes",
+    "src/service/http-error.ts",
+    "src/service/types.ts",
     "src/auth.ts",
     "src/data.ts",
+    "src/error.ts",
+    "src/api.ts",
     "src/test/setup.ts",
     "src/test/storage.test.ts",
     "src/test/worker.test.ts"

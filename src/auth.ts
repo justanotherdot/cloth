@@ -1,4 +1,4 @@
-import { Env } from './data';
+import { Env } from './service/types';
 
 interface JWTPayload {
   aud: string;
