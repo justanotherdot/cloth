@@ -1,6 +1,26 @@
 import { Flag } from '../core/flag';
 import { ErrorCode } from '../core/error';
 
+/**
+ * API Contract Types
+ * 
+ * IMPORTANT: These types define the HTTP API boundary and are shared between:
+ * - Backend route handlers (src/service/routes/)
+ * - Frontend client (src/frontend/client/)
+ * - Future external SDKs
+ * 
+ * ARCHITECTURAL DECISIONS:
+ * - We use explicit shared types instead of code generation (tRPC, OpenAPI)
+ * - This provides clear contracts that can evolve into SDK versioning
+ * - Single deployment unit = types and API deploy together, sync is natural
+ * - For templates: Copy this pattern across projects for consistency
+ * 
+ * MAINTENANCE:
+ * - When changing these types, both backend AND frontend will break (good!)
+ * - This forces deliberate API evolution and prevents drift
+ * - Consider backward compatibility for breaking changes
+ */
+
 // Base API response types
 export interface ApiSuccessResponse<T> {
   success: true;

@@ -3,6 +3,31 @@ import { flagClient } from '../client/flag-client';
 import { FlagCreateRequest, FlagUpdateRequest } from '../../service/api';
 import { Flag } from '../../core/flag';
 
+/**
+ * TanStack Query Hooks
+ * 
+ * ARCHITECTURAL DECISION:
+ * We chose TanStack Query over manual useState because:
+ * - Separates data fetching from state management 
+ * - Provides caching, background updates, error handling
+ * - Declarative approach vs imperative useState/useEffect
+ * - Template-friendly pattern across projects
+ * 
+ * ALTERNATIVE CONSIDERED:
+ * - tRPC: More DX but more complex setup, less template-friendly
+ * - Manual useState: What we had before, mixed concerns
+ * 
+ * FOR TEMPLATES:
+ * Copy this pattern for other resources:
+ * - src/frontend/hooks/use-users.ts  
+ * - src/frontend/hooks/use-orders.ts
+ * - etc.
+ * 
+ * CACHE INVALIDATION:
+ * Mutations automatically invalidate queries to keep UI in sync.
+ * See onSuccess callbacks in mutation hooks below.
+ */
+
 // Query keys for cache management
 export const flagKeys = {
   all: ['flags'] as const,

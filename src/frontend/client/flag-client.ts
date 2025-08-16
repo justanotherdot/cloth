@@ -8,9 +8,25 @@ import {
 } from '../../service/api';
 
 /**
- * Pure API client for flag operations.
- * No React dependencies, no state management.
- * Returns typed promises that can be used with TanStack Query.
+ * Pure API Client Layer
+ * 
+ * ARCHITECTURAL PATTERN:
+ * This client layer separates API calls from React state management:
+ * - Pure functions (no React hooks, no state)
+ * - Framework agnostic (can be used outside React)
+ * - Returns typed promises for TanStack Query
+ * - Uses shared API contracts from src/service/api.ts
+ * 
+ * FOR TEMPLATES:
+ * Copy this pattern for other resources:
+ * - src/frontend/client/user-client.ts
+ * - src/frontend/client/order-client.ts
+ * - etc.
+ * 
+ * BENEFITS:
+ * - Testable without React
+ * - Reusable across different state management solutions
+ * - Clear separation of concerns (API vs state vs UI)
  */
 export const flagClient = {
   /**

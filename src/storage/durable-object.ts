@@ -2,6 +2,29 @@ import { Flag } from '../core/flag';
 import { FlagStorage } from '../core/flag-service';
 import type { DurableObjectState, DurableObjectStorage } from '@cloudflare/workers-types';
 
+/**
+ * Storage Infrastructure Layer
+ * 
+ * ARCHITECTURAL PATTERN:
+ * This layer provides a thin wrapper around Cloudflare Durable Objects
+ * that implements the core domain interfaces.
+ * 
+ * DEPENDENCY INVERSION:
+ * - Core defines FlagStorage interface (what it needs)
+ * - This layer implements that interface (how it's stored)
+ * - Core business logic is independent of storage technology
+ * 
+ * CLOUDFLARE SPECIFIC:
+ * - DurableFlagStorage: Clean interface implementation
+ * - StorageObject: Cloudflare's required Durable Object class
+ * - Internal HTTP API for service layer communication
+ * 
+ * FOR TEMPLATES:
+ * - Replace Flag domain but keep the pattern
+ * - Same Durable Object structure works across projects
+ * - Consider other storage backends (D1, KV) with same interface
+ */
+
 // Durable Object implementation of FlagStorage interface
 export class DurableFlagStorage implements FlagStorage {
   constructor(private storage: DurableObjectStorage) {}
